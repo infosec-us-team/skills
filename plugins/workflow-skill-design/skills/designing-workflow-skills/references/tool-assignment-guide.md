@@ -46,20 +46,22 @@ How to choose the right tools for skills, agents, and subagents.
 
 ## String Substitutions
 
-Skill content supports dynamic values at invocation time:
+Skill content supports dynamic values at invocation time. **CAUTION:** The skill loader processes these substitutions before Claude sees the file — even inside code fences and inline code blocks. Do not use the raw syntax in documentation or example text. Variables silently resolve to empty strings, and shell preprocessing attempts execution, causing load errors.
 
-| Variable | Description |
-|----------|-------------|
-| `$ARGUMENTS` | All arguments passed after `/skill-name`. Appended as `ARGUMENTS: <value>` if placeholder absent. |
-| `$ARGUMENTS[N]` | Specific argument by 0-based index. |
-| `$N` | Shorthand for `$ARGUMENTS[N]` (e.g., `$0`, `$1`). |
-| `${CLAUDE_SESSION_ID}` | Current session ID. |
-| `` !`command` `` | Shell preprocessing. Command runs before Claude sees the content; output replaces the placeholder. |
+There are three substitution types:
+
+1. **Argument variables** — A dollar sign followed by ARGUMENTS for all args, or a dollar sign followed by ARGUMENTS[N] or just a dollar sign followed by N for positional args (0-based index, where N is shorthand for ARGUMENTS[N]). If no placeholder exists in the content, arguments are appended as an `ARGUMENTS:` line.
+
+2. **Session variable** — A dollar sign followed by {CLAUDE_SESSION_ID} (with curly braces) resolves to the current session ID.
+
+3. **Shell preprocessing** — An exclamation mark immediately followed by a command enclosed in backticks. For example, to inject the output of `git status`, place an exclamation mark before the backtick-enclosed command. The command runs before Claude sees the content; its output replaces the placeholder.
 
 **Design implications:**
-- Use `$ARGUMENTS` when the skill accepts free-form input (file paths, issue numbers)
-- Use positional args (`$0`, `$1`) when the skill expects structured input (e.g., `/migrate-component SearchBar React Vue`)
-- Use `` !`command` `` to inject live context (git status, PR diff) — pairs well with `context: fork`
+- Use argument variables when the skill accepts free-form input (file paths, issue numbers)
+- Use positional args when the skill expects structured input (e.g., `/migrate-component SearchBar React Vue`)
+- Use shell preprocessing to inject live context (git status, PR diff) — pairs well with `context: fork`
+
+**When documenting these patterns in a skill:** Describe the syntax textually (as this file does) rather than using the raw patterns. Code fences and inline code do NOT prevent substitution — the loader processes the raw file content before any Markdown parsing.
 
 ---
 
